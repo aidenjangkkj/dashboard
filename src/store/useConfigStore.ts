@@ -1,10 +1,12 @@
-// src/store/useConfigStore.ts
+// src/store/useConfigStore.ts  ← 교체
 "use client";
 import { create } from "zustand";
+import { toMessage } from "@/lib/error"; // ✅ 에러 메시지 안전 변환 유틸
 
 type Mode = "live" | "historical";
 
-type FxState = {
+/** /api/rates 응답 형태 (서버 라우트와 맞춰주세요) */
+type FxApiResponse = {
   mode: Mode;
   date?: string;
   baseSource: string;
@@ -13,7 +15,11 @@ type FxState = {
   success?: boolean;
   fallback?: boolean;
   message?: string;
-  version?: number;            // ✅ 추가: 리렌더 트리거용
+};
+
+type FxState = FxApiResponse & {
+  version?: number; // 클라이언트에서만 쓰는 리렌더 트리거
+  error?: string;   // 에러 메시지 (옵션)
 };
 
 type State = {
@@ -52,6 +58,7 @@ export const useConfigStore = create<State & Actions>((set, get) => ({
   loadConfig: async () => {
     const { fxMode, fxDate, source, symbols } = get();
     set({ loading: true, error: undefined });
+
     try {
       const params = new URLSearchParams();
       params.set("mode", fxMode);
@@ -59,15 +66,19 @@ export const useConfigStore = create<State & Actions>((set, get) => ({
       params.set("symbols", symbols.join(","));
       if (fxMode === "historical" && fxDate) params.set("date", fxDate);
 
-
       const url = `/api/rates?${params.toString()}`;
-
       const res = await fetch(url, { cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const fx = await res.json();
 
-      set({ fx: { ...fx, version: Date.now() }, loading: false }); // ✅ 항상 버전 갱신
-    } catch (e: any) {
+      // ✅ 응답을 명시 타입으로 파싱
+      const fx = (await res.json()) as FxApiResponse;
+
+      set({
+        fx: { ...fx, version: Date.now() },
+        loading: false,
+      });
+    } catch (e: unknown) {
+      const msg = toMessage(e, "Failed to load FX");
       set({
         fx: {
           mode: fxMode,
@@ -75,18 +86,20 @@ export const useConfigStore = create<State & Actions>((set, get) => ({
           baseSource: "USD",
           pairRates: { USDKRW: 1350, KRWUSD: 1 / 1350, USDUSD: 1, KRWKRW: 1 },
           fallback: true,
-          message: e?.message ?? "FX fallback",
-          version: Date.now(), // ✅ 실패여도 버전 갱신
+          message: msg,
+          version: Date.now(), // 실패여도 리렌더 유도
         },
         loading: false,
-        error: e?.message ?? "Failed to load FX",
+        error: msg,
       });
     }
   },
 
   getRatePair: (from, to) => {
-    if (from.toUpperCase() === to.toUpperCase()) return 1;
-    const table = get().fx?.pairRates || {};
-    return table[`${from.toUpperCase()}${to.toUpperCase()}`];
+    const a = from.toUpperCase();
+    const b = to.toUpperCase();
+    if (a === b) return 1;
+    const table = get().fx?.pairRates ?? {};
+    return table[`${a}${b}`];
   },
 }));

@@ -1,17 +1,4 @@
 import "@/app/globals.css";
-import { PropsWithChildren } from "react";
-
-type Props = PropsWithChildren<{
-  title?: string;
-  subtitle?: string;
-  value?: string;
-  className?: string;
-  compact?: boolean;
-  interactive?: boolean;          // hover 스타일/커서 추가
-  onClick?: () => void;           // 카드 클릭 액션
-  headerRight?: React.ReactNode;  // 헤더 우측 액션/칩/버튼
-  footer?: React.ReactNode;       // 하단 보조 UI (태그, 버튼 등)
-}>;
 
 // src/components/ui/Card.tsx
 export default function Card({

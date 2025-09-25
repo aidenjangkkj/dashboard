@@ -108,7 +108,10 @@ export default function TargetVsActual({
   const targetYear = useUiStore((s) => s.target.targetYear);
   const reductionPct = useUiStore((s) => s.target.reductionPct);
 
-  const safe: GhgEmission[] = Array.isArray(data) ? data : [];
+  const safe: GhgEmission[] = useMemo(
+  () => (Array.isArray(data) ? data : []),
+  [data]
+);
 
   // 월별 실제 합산
   const actualMap = useMemo(() => {

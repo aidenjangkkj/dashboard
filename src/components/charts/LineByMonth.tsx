@@ -31,10 +31,10 @@ export default function LineByMonth({ data }: { data: GhgEmission[] | undefined 
     emissions: scaleUnit(d?.emissions ?? 0, unit),
   }));
 
-  const tooltipFormatter = (value: ValueType, _name?: NameType) => {
-    const num = Array.isArray(value) ? Number(value[0]) : Number(value ?? 0);
-    return `${num.toLocaleString()} ${unit}`;
-  };
+  const tooltipFormatter = (value: ValueType) => {
+  const num = Array.isArray(value) ? Number(value[0]) : Number(value ?? 0);
+  return `${num.toLocaleString()} ${unit}`;
+};
 
   if (!rows.length) {
     return (

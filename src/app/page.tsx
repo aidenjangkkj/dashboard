@@ -39,7 +39,6 @@ export default function Page() {
   // ✅ 훅은 항상 최상단
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [targetOpen, setTargetOpen] = useState(false);
-  const targetsByMonth = useUiStore((s) => s.targetsByMonth as Record<string, number> | undefined);
 
   useEffect(() => {
     (async () => {

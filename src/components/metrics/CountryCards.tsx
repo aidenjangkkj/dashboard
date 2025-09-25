@@ -71,7 +71,7 @@ export default function CountryCards() {
   const { currency, unit, sortBy, query, hidden } = useUiStore();
 
   const { fx } = useConfigStore(); // 리렌더 트리거용
-  const _fxVer = fx?.version; // eslint-disable-line @typescript-eslint/no-unused-vars
+  const _fxVer = fx?.version;
 
   const { toggleCountryFavorite, isCountryFavorite } = useUiStore();
 

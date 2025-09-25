@@ -8,7 +8,6 @@ type FormatOpts = { amountCurrency?: Currency; rounding?: "round" | "floor" | "c
 
 export function useCurrencyHelpers() {
   const getRatePair = useConfigStore((s) => s.getRatePair);
-  const _ver = useConfigStore((s) => s.fx?.version); // 리렌더 트리거
 
   const convertFx = (amount: number, from: Currency, to: Currency) => {
     if (from === to) return amount;

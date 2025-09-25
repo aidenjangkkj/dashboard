@@ -1,8 +1,15 @@
+// src/components/layout/Topbar.tsx  ← 교체
 "use client";
+
 import { useState } from "react";
 import { useDataStore } from "@/store/useDataStore";
 import { useUiStore } from "@/store/useUiStore";
 import { useConfigStore } from "@/store/useConfigStore";
+
+type Currency = "USD" | "KRW";
+type Unit = "tCO2e" | "ktCO2e";
+type SortBy = "emissions" | "tax";
+type FxMode = "historical" | "live";
 
 export default function Topbar() {
   const { companies, countries } = useDataStore();
@@ -63,7 +70,9 @@ export default function Topbar() {
             className="w-full max-w-xl rounded-xl px-3 py-2 text-sm bg-white/70 dark:bg-white/5 border border-white/30 dark:border-white/10 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
             placeholder="국가/회사 검색"
             value={query}
-            onChange={(e) => setQuery(e.target.value)}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              setQuery(e.currentTarget.value)
+            }
           />
         </div>
 
@@ -72,7 +81,9 @@ export default function Topbar() {
           <select
             className="rounded-lg border px-2 py-1 text-sm bg-white/70 dark:bg-white/5"
             value={currency}
-            onChange={(e) => setCurrency(e.target.value as any)}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+              setCurrency(e.currentTarget.value as Currency)
+            }
           >
             <option value="USD">USD</option>
             <option value="KRW">KRW</option>
@@ -81,7 +92,9 @@ export default function Topbar() {
           <select
             className="rounded-lg border px-2 py-1 text-sm bg-white/70 dark:bg-white/5"
             value={unit}
-            onChange={(e) => setUnit(e.target.value as any)}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+              setUnit(e.currentTarget.value as Unit)
+            }
           >
             <option value="tCO2e">tCO2e</option>
             <option value="ktCO2e">ktCO2e</option>
@@ -90,7 +103,9 @@ export default function Topbar() {
           <select
             className="rounded-lg border px-2 py-1 text-sm bg-white/70 dark:bg-white/5"
             value={sortBy}
-            onChange={(e) => setSortBy(e.target.value as any)}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+              setSortBy(e.currentTarget.value as SortBy)
+            }
           >
             <option value="emissions">배출량</option>
             <option value="tax">추정세</option>
@@ -99,7 +114,9 @@ export default function Topbar() {
           <select
             className="rounded-lg border px-2 py-1 text-sm bg-white/70 dark:bg-white/5"
             value={fxMode}
-            onChange={(e) => setFxMode(e.target.value as any)}
+            onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+              setFxMode(e.currentTarget.value as FxMode)
+            }
           >
             <option value="historical">과거</option>
             <option value="live">실시간</option>
@@ -109,13 +126,15 @@ export default function Topbar() {
             <input
               type="date"
               value={fxDate ?? ""}
-              onChange={(e) => setFxDate(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                setFxDate(e.currentTarget.value)
+              }
               className="rounded-lg border px-2 py-1 text-sm bg-white/70 dark:bg-white/5"
             />
           )}
 
           <button
-            onClick={loadConfig}
+            onClick={() => void loadConfig()}
             className="rounded-lg border px-2 py-1 text-sm bg-white/70 dark:bg-white/5"
           >
             환율 갱신
@@ -240,7 +259,9 @@ export default function Topbar() {
                 className="w-full rounded-xl px-3 py-2 text-sm bg-white/70 dark:bg-white/5 border border-neutral-200 dark:border-white/10 shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500/30"
                 placeholder="국가/회사 이름을 입력하세요"
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                  setQuery(e.currentTarget.value)
+                }
               />
 
               {/* 빠른 제안 (옵션) */}
@@ -297,7 +318,9 @@ export default function Topbar() {
                   <select
                     className="border rounded-md p-1 text-sm"
                     value={currency}
-                    onChange={(e) => setCurrency(e.target.value as any)}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                      setCurrency(e.currentTarget.value as Currency)
+                    }
                   >
                     <option value="USD">USD</option>
                     <option value="KRW">KRW</option>
@@ -308,7 +331,9 @@ export default function Topbar() {
                   <select
                     className="border rounded-md p-1 text-sm"
                     value={unit}
-                    onChange={(e) => setUnit(e.target.value as any)}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                      setUnit(e.currentTarget.value as Unit)
+                    }
                   >
                     <option value="tCO2e">tCO2e</option>
                     <option value="ktCO2e">ktCO2e</option>
@@ -319,7 +344,9 @@ export default function Topbar() {
                   <select
                     className="border rounded-md p-1 text-sm"
                     value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value as any)}
+                    onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                      setSortBy(e.currentTarget.value as SortBy)
+                    }
                   >
                     <option value="emissions">배출량</option>
                     <option value="tax">추정세</option>
@@ -336,13 +363,15 @@ export default function Topbar() {
                     <select
                       className="flex-1 border rounded-md p-1 text-sm"
                       value={fxMode}
-                      onChange={(e) => setFxMode(e.target.value as any)}
+                      onChange={(e: React.ChangeEvent<HTMLSelectElement>) =>
+                        setFxMode(e.currentTarget.value as FxMode)
+                      }
                     >
                       <option value="historical">과거</option>
                       <option value="live">실시간</option>
                     </select>
                     <button
-                      onClick={loadConfig}
+                      onClick={() => void loadConfig()}
                       className="flex-1 rounded-md border px-3 py-2 text-sm bg-white hover:bg-neutral-50"
                     >
                       환율 갱신
@@ -358,7 +387,9 @@ export default function Topbar() {
                       type="date"
                       className="border rounded-md p-1 text-sm"
                       value={fxDate ?? ""}
-                      onChange={(e) => setFxDate(e.target.value)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+                        setFxDate(e.currentTarget.value)
+                      }
                     />
                   </div>
                 )}

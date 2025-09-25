@@ -37,8 +37,8 @@ export const useDataStore = create<State & Actions>((set, get) => ({
     try {
       const list = await fetchCountries();
       set({ countries: list });
-    } catch (e: any) {
-      set({ error: e?.message ?? "Failed to load countries" });
+    } catch (e: unknown) {
+      set({ error: toMessage(e, "Failed to load countries") });
     }
   },
 
@@ -57,8 +57,8 @@ export const useDataStore = create<State & Actions>((set, get) => ({
     try {
       const posts = await fetchPostsByCompany(id);
       set({ posts, loading: false });
-    } catch (e: any) {
-      set({ loading: false, error: e?.message ?? "Failed to load posts" });
+    } catch (e: unknown) {
+      set({ loading: false, error: toMessage(e, "Failed to load posts") });
     }
   },
 
@@ -69,9 +69,9 @@ export const useDataStore = create<State & Actions>((set, get) => ({
     const tempId = post.id ?? `temp-${Date.now()}`;
     const optimistic: Post[] = post.id
       ? prev.map((p) =>
-          p.id === post.id ? ({ ...(post as any), id: post.id } as Post) : p
+          p.id === post.id ? ({ ...(post as Post), id: post.id } as Post) : p
         )
-      : [...prev, { ...(post as any), id: tempId } as Post];
+      : [...prev, { ...(post as Post), id: tempId }];
 
     set({ posts: optimistic });
 
@@ -84,13 +84,12 @@ export const useDataStore = create<State & Actions>((set, get) => ({
         ),
       });
       return saved; // ✅ 저장 결과 반환
-    } catch (e: any) {
+    } catch (e: unknown) {
       // 롤백 후 반드시 다시 던진다 (UI에서 catch → 토스트)
       set({ posts: prev });
-      const err = e instanceof Error ? e : new Error("Save failed");
-      // 선택: 전역 에러도 남기고 싶다면 유지
-      set({ error: err.message });
-      throw err; // ✅ rethrow 필수
+      const msg = toMessage(e, "Save failed");
+      set({ error: msg });
+      throw new Error(msg);
     }
   },
 
