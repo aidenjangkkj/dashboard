@@ -1,1 +1,55 @@
+/* src/app/globals.css */
 @import "tailwindcss";
+
+/* --- 테마 토큰 & 커스텀 유틸은 여기 아래에 --- */
+
+/* Theme tokens */
+:root {
+  --bg: 247 248 250;
+  --surface: 255 255 255;
+  --text: 17 24 39;
+  --muted: 107 114 128;
+
+  --brand: 79 70 229;      /* indigo-600 */
+  --brand-2: 99 102 241;   /* indigo-500 */
+  --accent: 16 185 129;    /* emerald-500 */
+  --warn: 249 115 22;      /* orange-500 */
+
+  --radius: 16px;
+  --shadow-1: 0 1px 2px rgba(17,24,39,.06), 0 8px 24px rgba(17,24,39,.06);
+  --shadow-2: 0 8px 16px rgba(17,24,39,.08), 0 24px 48px rgba(17,24,39,.10);
+}
+
+.dark {
+  --bg: 10 12 16;
+  --surface: 17 20 27;
+  --text: 229 231 235;
+  --muted: 148 163 184;
+
+  --shadow-1: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px rgba(0,0,0,.35);
+  --shadow-2: 0 10px 28px rgba(0,0,0,.5), 0 28px 56px rgba(0,0,0,.45);
+}
+
+/* Base background */
+body {
+  background:
+    radial-gradient(1200px 600px at 80% -10%, rgba(79,70,229,.12), transparent 60%),
+    radial-gradient(1000px 500px at -10% 20%, rgba(16,185,129,.10), transparent 60%),
+    rgb(var(--bg));
+  color: rgb(var(--text));
+}
+
+/* Reusable helpers (v4에서도 그냥 클래스로 둬도 됨) */
+.card { background: rgb(var(--surface)); border-radius: var(--radius); box-shadow: var(--shadow-1); }
+.card-hover:hover { transform: translateY(-2px); box-shadow: var(--shadow-2); transition: box-shadow .25s ease, transform .25s ease; }
+
+.section { margin-top: 2rem; }
+.section-title { font-size: clamp(1.125rem, 2vw, 1.5rem); font-weight: 600; }
+.section-subtitle { font-size: .875rem; color: rgb(var(--muted)); }
+
+.thin-scrollbar { scrollbar-width: thin; }
+.thin-scrollbar::-webkit-scrollbar { height: 6px; width: 6px; }
+.thin-scrollbar::-webkit-scrollbar-thumb { background: rgba(100,116,139,.4); border-radius: 999px; }
+
+.glass { background: color-mix(in oklab, white 70%, transparent); backdrop-filter: saturate(1.2) blur(8px); }
+.dark .glass { background: rgba(17,20,27,.5); backdrop-filter: saturate(1.2) blur(10px); }

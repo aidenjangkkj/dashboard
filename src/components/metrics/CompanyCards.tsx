@@ -1,3 +1,4 @@
+// src/components/metrics/CompanyCards.tsx
 "use client";
 
 import { useMemo, useState } from "react";
@@ -11,41 +12,14 @@ import { useUiStore } from "@/store/useUiStore";
 import { useConfigStore } from "@/store/useConfigStore";
 import type { Company, Country } from "@/lib/types";
 
-/** 국가별 합계/추정세(KRW) 집계 */
-function aggCountriesBaseKRW(companies: Company[], countries: Country[]) {
-  const countryMap = new Map(countries.map((c) => [c.code, c]));
-  const acc = new Map<
-    string,
-    { code: string; name: string; total: number; taxRateKRW: number | null }
-  >();
-
-  for (const co of companies ?? []) {
-    const country = countryMap.get(co.country);
-    const code = co.country;
-    const name = country?.name ?? code;
-    const totalCompany = (co.emissions ?? []).reduce(
-      (a, e) => a + (e?.emissions ?? 0),
-      0
-    );
-
-    const cur = acc.get(code) ?? {
-      code,
-      name,
-      total: 0,
-      taxRateKRW: country?.taxRate ?? null, // KRW / tCO2e
-    };
-    cur.total += totalCompany;
-    acc.set(code, cur);
-  }
-
-  // taxKRW는 최종 합계 * 세율
-  return Array.from(acc.values()).map((r) => ({
-    code: r.code,
-    name: r.name,
-    total: r.total, // tCO2e
-    taxKRW:
-      typeof r.taxRateKRW === "number" ? r.total * r.taxRateKRW : null,
-  }));
+function aggCompaniesBaseKRW(companies: Company[], countries: Country[]) {
+  const byCode = new Map(countries.map((c) => [c.code, c]));
+  return companies.map((c) => {
+    const total = c.emissions.reduce((a, e) => a + e.emissions, 0); // tCO2e
+    const taxRateKRW = byCode.get(c.country)?.taxRate ?? null; // KRW / tCO2e 가정
+    const taxKRW = typeof taxRateKRW === "number" ? total * taxRateKRW : null;
+    return { id: c.id, name: c.name, country: c.country, total, taxKRW };
+  });
 }
 
 function Star({ active }: { active: boolean }) {
@@ -63,80 +37,55 @@ function Star({ active }: { active: boolean }) {
   );
 }
 
-export default function CountryCards() {
-  const router = useRouter();
-  const { formatCurrency } = useCurrencyHelpers();
-
+export default function CompanyCards() {
   const { companies, countries } = useDataStore();
-  const { currency, unit, sortBy, query, hidden } = useUiStore();
-
-  const { fx } = useConfigStore(); // 리렌더 트리거용
-  const _fxVer = fx?.version; // eslint-disable-line @typescript-eslint/no-unused-vars
-
-  const { toggleCountryFavorite, isCountryFavorite } = useUiStore();
-
+  const { currency, unit, sortBy, query } = useUiStore();
+  const { formatCurrency } = useCurrencyHelpers();
+  const _fxVer = useConfigStore((s) => s.fx?.version);
+  const { toggleCompanyFavorite, isCompanyFavorite } = useUiStore();
   const [topN, setTopN] = useState(9);
   const [openModal, setOpenModal] = useState(false);
+  const router = useRouter();
 
-  // 1) 집계 (KRW 기준 추정세)
   const raw = useMemo(
-    () => aggCountriesBaseKRW(companies ?? [], countries ?? []),
+    () => aggCompaniesBaseKRW(companies, countries),
     [companies, countries]
   );
 
-  // 2) 검색/숨김 필터
   const filtered = useMemo(() => {
-    let rows = raw;
-    if (query?.trim()) {
-      const q = query.toLowerCase();
-      rows = rows.filter(
-        (r) =>
-          r.name.toLowerCase().includes(q) ||
-          r.code.toLowerCase().includes(q)
-      );
-    }
-    if (hidden?.size) {
-      rows = rows.filter((r) => !hidden.has(r.code));
-    }
-    return rows;
-  }, [raw, query, hidden]);
+    if (!query.trim()) return raw;
+    const q = query.toLowerCase();
+    return raw.filter(
+      (a) => a.name.toLowerCase().includes(q) || a.country.toLowerCase().includes(q)
+    );
+  }, [raw, query]);
 
-  // 3) 스케일/정렬/표기값 준비
   const prepared = useMemo(() => {
-    const rows = filtered.map((r) => {
-      const emissionsScaled = scaleUnit(r.total ?? 0, unit);
+    const rows = filtered.map((a) => {
+      const eScaled = scaleUnit(a.total, unit);
       const subtitle =
-        r.taxKRW != null
-          ? `추정세: ${formatCurrency(r.taxKRW, currency, {
-              amountCurrency: "KRW",
-            })}`
+        typeof a.taxKRW === "number"
+          ? `추정세: ${formatCurrency(a.taxKRW, currency, { amountCurrency: "KRW" })}`
           : undefined;
       return {
-        id: r.code,
-        title: `${r.name} (${r.code})`,
-        emissions: emissionsScaled,
-        taxKRW: r.taxKRW ?? null,
+        id: a.id,
+        title: `${a.name} (${a.country})`,
         subtitle,
+        emissions: eScaled,
+        taxKRW: a.taxKRW ?? null,
       };
     });
-
-    rows.sort((a, b) =>
+    rows.sort((x, y) =>
       sortBy === "tax"
-        ? (b.taxKRW ?? 0) - (a.taxKRW ?? 0)
-        : (b.emissions ?? 0) - (a.emissions ?? 0)
+        ? (y.taxKRW ?? 0) - (x.taxKRW ?? 0)
+        : y.emissions - x.emissions
     );
-
     return rows;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [JSON.stringify(filtered), unit, currency, sortBy, _fxVer]);
 
   if (!prepared.length)
-    return (
-      <div className="text-sm text-neutral-500">
-        표시할 국가가 없습니다.
-      </div>
-    );
-
+    return <div className="text-sm text-neutral-500">표시할 회사가 없습니다.</div>;
   const topRows = prepared.slice(0, topN);
 
   return (
@@ -156,21 +105,21 @@ export default function CountryCards() {
               </option>
             ))}
           </select>
-          <span className="text-sm text-neutral-500">국가만 표시</span>
+          <span className="text-sm text-neutral-500">회사만 표시</span>
         </div>
 
         <button
           className="h-9 rounded-md border border-neutral-200 bg-white px-3 text-sm hover:bg-neutral-50"
           onClick={() => setOpenModal(true)}
         >
-          전체 국가 보기
+          전체 회사 보기
         </button>
       </div>
 
       {/* Top N 카드 */}
       <div className="grid gap-5 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
         {topRows.map((r) => {
-          const fav = isCountryFavorite(r.id);
+          const fav = isCompanyFavorite(r.id);
           return (
             <Card
               key={r.id}
@@ -186,7 +135,7 @@ export default function CountryCards() {
                   }`}
                   onClick={(e) => {
                     e.stopPropagation();
-                    toggleCountryFavorite(r.id);
+                    toggleCompanyFavorite(r.id);
                   }}
                   aria-label={fav ? "즐겨찾기 해제" : "즐겨찾기 추가"}
                   title={fav ? "즐겨찾기 해제" : "즐겨찾기 추가"}
@@ -195,7 +144,7 @@ export default function CountryCards() {
                 </button>
               }
               interactive
-              onClick={() => router.push(`/countries/${r.id}`)}
+              onClick={() => router.push(`/companies/${r.id}`)}
             />
           );
         })}
@@ -208,32 +157,19 @@ export default function CountryCards() {
         items={prepared}
         searchText={(x) => x.title}
         sorters={[
-          {
-            id: "emissions",
-            label: "배출량",
-            compare: (a, b) => (b.emissions ?? 0) - (a.emissions ?? 0),
-          },
-          {
-            id: "tax",
-            label: "추정세",
-            compare: (a, b) => (b.taxKRW ?? 0) - (a.taxKRW ?? 0),
-          },
+          { id: "emissions", label: "배출량", compare: (a, b) => b.emissions - a.emissions },
+          { id: "tax", label: "추정세", compare: (a, b) => (b.taxKRW ?? 0) - (a.taxKRW ?? 0) },
         ]}
         defaultSortId={sortBy === "tax" ? "tax" : "emissions"}
         getId={(x) => x.id}
         getTitle={(x) => x.title}
         getSubtitle={(x) => x.subtitle}
-        getPrimary={(x) => ({
-          value: x.emissions.toLocaleString(),
-          label: unit,
-        })}
+        getPrimary={(x) => ({ value: x.emissions.toLocaleString(), label: unit })}
         getSecondary={(x) =>
-          x.taxKRW != null
-            ? { value: x.taxKRW.toLocaleString(), label: "KRW" }
-            : null
+          x.taxKRW != null ? { value: x.taxKRW.toLocaleString(), label: "KRW" } : null
         }
         rightHint={`표시 단위: ${unit} · 통화: ${currency}`}
-        onItemClick={(x) => router.push(`/countries/${x.id}`)}
+        onItemClick={(x) => router.push(`/companies/${x.id}`)}
       />
     </div>
   );

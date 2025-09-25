@@ -1,30 +1,47 @@
+// src/store/useUiStore.ts
 import { create } from "zustand";
-import type { Currency } from "@/lib/currency";
-import type { EmissionUnit } from "@/lib/format";
-
-export type SortBy = "emissions" | "tax";
 
 type UiState = {
-  currency: Currency;      // USD | KRW
-  unit: EmissionUnit;      // tCO2e | ktCO2e
-  sortBy: SortBy;          // emissions | tax
-  query: string;           // search
-  hidden: Set<string>;     // 숨김 국가 코드
-  sidebarOpen: boolean;    // ★ 추가
+  currency: "USD" | "KRW";
+  unit: "tCO2e" | "ktCO2e";
+  sortBy: "emissions" | "tax";
+  query: string;
+  hidden: Set<string>;
+  sidebarOpen: boolean;
+  favoriteCompanyIds: Set<string>;
+  favoriteCountryCodes: Set<string>;
+   periodFrom?: string | null;   // "2023-01"
+  periodTo?: string | null;     // "2024-12"
+  topN: number;                 // Top N 기본값
+  target: {
+    baselineYear?: number;      // 기준연도 (예: 2024)
+    targetYear?: number;        // 목표연도 (예: 2030)
+    reductionPct?: number;      // 2030까지 -30% => 30
+  };
 };
 
 type UiActions = {
   init: () => void;
-  setCurrency: (c: Currency) => void;
-  setUnit: (u: EmissionUnit) => void;
-  setSortBy: (s: SortBy) => void;
+  setCurrency: (c: UiState["currency"]) => void;
+  setUnit: (u: UiState["unit"]) => void;
+  setSortBy: (s: UiState["sortBy"]) => void;
   setQuery: (q: string) => void;
   toggleHide: (code: string) => void;
   clearHidden: () => void;
-  openSidebar: () => void;     // ★ 추가
-  closeSidebar: () => void;    // ★ 추가
-  toggleSidebar: () => void;   // ★ 추가
+  openSidebar: () => void;
+  closeSidebar: () => void;
+  toggleSidebar: () => void;
+  isCompanyFavorite: (id: string) => boolean;
+  toggleCompanyFavorite: (id: string) => void;
+  isCountryFavorite: (code: string) => boolean;
+  toggleCountryFavorite: (code: string) => void;
+  loadFavorites: () => void;
+  setPeriod: (from?: string | null, to?: string | null) => void;
+  setTopN: (n: number) => void;
+  setTarget: (t: Partial<UiState["target"]>) => void;
 };
+
+const FAVORITES_KEY = "favorites.v1"; // [{companies:[], countries:[]}] 구조
 
 export const useUiStore = create<UiState & UiActions>((set, get) => ({
   currency: "USD",
@@ -32,9 +49,24 @@ export const useUiStore = create<UiState & UiActions>((set, get) => ({
   sortBy: "emissions",
   query: "",
   hidden: new Set<string>(),
-  sidebarOpen: false, // ★
+  sidebarOpen: false,
 
-  init: () => set((s) => ({ ...s })),
+  // ★ 기본값
+  favoriteCompanyIds: new Set<string>(),
+  favoriteCountryCodes: new Set<string>(),
+   periodFrom: null,
+  periodTo: null,
+  topN: 10,
+  target: { baselineYear: 2024, targetYear: 2030, reductionPct: 30 },
+
+  setPeriod: (from, to) => set({ periodFrom: from ?? null, periodTo: to ?? null }),
+  setTopN: (n) => set({ topN: n }),
+  setTarget: (t) => set(({ target }) => ({ target: { ...target, ...t } })),
+
+  init: () => {
+    set((s) => ({ ...s }));
+    get().loadFavorites();
+  },
   setCurrency: (c) => set({ currency: c }),
   setUnit: (u) => set({ unit: u }),
   setSortBy: (s) => set({ sortBy: s }),
@@ -48,4 +80,44 @@ export const useUiStore = create<UiState & UiActions>((set, get) => ({
   openSidebar: () => set({ sidebarOpen: true }),
   closeSidebar: () => set({ sidebarOpen: false }),
   toggleSidebar: () => set({ sidebarOpen: !get().sidebarOpen }),
+
+  loadFavorites: () => {
+    try {
+      const raw = localStorage.getItem(FAVORITES_KEY);
+      if (!raw) return;
+      const parsed = JSON.parse(raw);
+      const companyArr: string[] = Array.isArray(parsed?.companies) ? parsed.companies : [];
+      const countryArr: string[] = Array.isArray(parsed?.countries) ? parsed.countries : [];
+      set({
+        favoriteCompanyIds: new Set<string>(),
+        favoriteCountryCodes: new Set<string>(),
+      });
+    } catch {}
+  },
+  isCompanyFavorite: (id) => get().favoriteCompanyIds.has(id),
+  toggleCompanyFavorite: (id) => {
+    const next = new Set(get().favoriteCompanyIds);
+    next.has(id) ? next.delete(id) : next.add(id);
+    set({ favoriteCompanyIds: next });
+    try {
+      const now = JSON.parse(localStorage.getItem(FAVORITES_KEY) || "{}");
+      localStorage.setItem(
+        FAVORITES_KEY,
+        JSON.stringify({ companies: Array.from(next), countries: Array.from(get().favoriteCountryCodes), ...now })
+      );
+    } catch {}
+  },
+  isCountryFavorite: (code) => get().favoriteCountryCodes.has(code),
+  toggleCountryFavorite: (code) => {
+    const next = new Set(get().favoriteCountryCodes);
+    next.has(code) ? next.delete(code) : next.add(code);
+    set({ favoriteCountryCodes: next });
+    try {
+      const now = JSON.parse(localStorage.getItem(FAVORITES_KEY) || "{}");
+      localStorage.setItem(
+        FAVORITES_KEY,
+        JSON.stringify({ companies: Array.from(get().favoriteCompanyIds), countries: Array.from(next), ...now })
+      );
+    } catch {}
+  },
 }));
