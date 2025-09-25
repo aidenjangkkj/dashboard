@@ -173,15 +173,6 @@ export default function Topbar() {
               </div>
             )}
           </div>
-
-          {/* 다크 토글 */}
-          <button
-            onClick={() => document.documentElement.classList.toggle("dark")}
-            className="rounded-lg border px-2 py-1 text-sm bg-white/70 dark:bg-white/5"
-            aria-label="Toggle dark mode"
-          >
-            Dark
-          </button>
         </div>
 
         {/* 우측: 모바일 아이콘들 */}

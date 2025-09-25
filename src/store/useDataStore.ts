@@ -1,3 +1,4 @@
+// src/store/useDataStore.ts  ← 교체
 import { create } from "zustand";
 import {
   fetchCompanies,
@@ -20,7 +21,7 @@ type Actions = {
   loadCountries: () => Promise<void>;
   loadCompanies: () => Promise<void>;
   selectCompany: (id: string) => Promise<void>;
-  addOrUpdatePost: (post: Omit<Post, "id"> & { id?: string }) => Promise<void>;
+  addOrUpdatePost: (post: Omit<Post, "id"> & { id?: string }) => Promise<Post>; // ✅ 반환타입 변경
   clearError: () => void;
 };
 
@@ -63,24 +64,33 @@ export const useDataStore = create<State & Actions>((set, get) => ({
 
   addOrUpdatePost: async (post) => {
     const prev = get().posts;
+
+    // 임시 ID로 낙관적 반영
     const tempId = post.id ?? `temp-${Date.now()}`;
-    const optimistic = post.id
+    const optimistic: Post[] = post.id
       ? prev.map((p) =>
-          p.id === post.id ? { ...(post as any), id: post.id } : p
+          p.id === post.id ? ({ ...(post as any), id: post.id } as Post) : p
         )
-      : [...prev, { ...(post as any), id: tempId }];
+      : [...prev, { ...(post as any), id: tempId } as Post];
 
     set({ posts: optimistic });
 
     try {
-      const saved = await savePost(post);
+      const saved = await savePost(post); // 여기서 maybeFail()로 실패 가능
+      // tempId 또는 기존 id를 saved로 치환
       set({
         posts: optimistic.map((p) =>
           p.id === tempId || p.id === post.id ? saved : p
         ),
       });
+      return saved; // ✅ 저장 결과 반환
     } catch (e: any) {
-      set({ posts: prev, error: e?.message ?? "Save failed" });
+      // 롤백 후 반드시 다시 던진다 (UI에서 catch → 토스트)
+      set({ posts: prev });
+      const err = e instanceof Error ? e : new Error("Save failed");
+      // 선택: 전역 에러도 남기고 싶다면 유지
+      set({ error: err.message });
+      throw err; // ✅ rethrow 필수
     }
   },
 

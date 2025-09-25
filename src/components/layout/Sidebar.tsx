@@ -66,7 +66,7 @@ export default function Sidebar() {
       <aside
         className="hidden md:flex md:flex-col md:w-72 md:shrink-0 md:border-r md:min-h-dvh md:p-4 md:space-y-3
                    bg-gradient-to-b from-white/90 to-white/60 dark:from-[rgba(17,20,27,.9)] dark:to-[rgba(17,20,27,.6)]
-                   backdrop-blur supports-[backdrop-filter]:bg-white/50 md:sticky md:top-0 md:h-[100svh] md:max-h-[100svh] md:z-30 md:min-h-0"
+                   backdrop-blur supports-[backdrop-filter]:bg-white/50 md:sticky md:top-0 md:h-[100svh] md:max-h-[100svh] md:z-30"
       >
         <Link href="/" className="block font-semibold text-lg">Emissions Dashboard</Link>
         <div className="flex-1 min-h-0">

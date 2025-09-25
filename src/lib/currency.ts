@@ -2,8 +2,7 @@
 import { useConfigStore } from "@/store/useConfigStore";
 export type Currency = "USD" | "KRW";
 
-// ✅ 필요할 때만 켜자
-const DEBUG_FX = true;
+const DEBUG_FX = false;
 
 type FormatOpts = { amountCurrency?: Currency; rounding?: "round" | "floor" | "ceil" };
 
