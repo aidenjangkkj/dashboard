@@ -69,6 +69,14 @@ Next.js(App Router) + TypeScript + TailwindCSS + Zustand 상태관리 기반으�
 
 ---
 
+
+## ⚡ 성능 측정
+- (https://pagespeed.web.dev/analysis/https-dashboard-omega-beige-25-vercel-app/3e2cf2wmwt?form_factor=desktop)
+  
+
+
+---
+
 ## 📂 프로젝트 구조
 
 ```
