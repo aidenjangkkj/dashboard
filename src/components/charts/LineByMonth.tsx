@@ -1,18 +1,20 @@
-// dashboard/src/components/charts/LineByMonth.tsx
-
+// src/components/charts/LineByMonth.tsx  ← 교체
 "use client";
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
+import type { ValueType, NameType } from "recharts/types/component/DefaultTooltipContent";
 import { GhgEmission } from "@/lib/types";
 import { useUiStore } from "@/store/useUiStore";
 import { scaleUnit } from "@/lib/format";
 
+type Row = { yearMonth: string; emissions: number };
+
 export default function LineByMonth({ data }: { data: GhgEmission[] | undefined | null }) {
   const unit = useUiStore((s) => s.unit);
 
-  const dataSafe = Array.isArray(data) ? data : [];
-  
+  const dataSafe: GhgEmission[] = Array.isArray(data) ? data : [];
+
   const byMonth = Object.values(
     dataSafe.reduce<Record<string, { yearMonth: string; emissions: number }>>((acc, e) => {
       const ym = e?.yearMonth ?? "";
@@ -24,10 +26,15 @@ export default function LineByMonth({ data }: { data: GhgEmission[] | undefined 
     }, {})
   ).sort((a, b) => a.yearMonth.localeCompare(b.yearMonth));
 
-  const rows = byMonth.map((d) => ({
+  const rows: Row[] = byMonth.map((d) => ({
     yearMonth: d.yearMonth,
     emissions: scaleUnit(d?.emissions ?? 0, unit),
   }));
+
+  const tooltipFormatter = (value: ValueType, _name?: NameType) => {
+    const num = Array.isArray(value) ? Number(value[0]) : Number(value ?? 0);
+    return `${num.toLocaleString()} ${unit}`;
+  };
 
   if (!rows.length) {
     return (
@@ -52,9 +59,9 @@ export default function LineByMonth({ data }: { data: GhgEmission[] | undefined 
             </defs>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="yearMonth" tickMargin={8} />
-            <YAxis tickFormatter={(v) => Number(v ?? 0).toLocaleString()} />
-            <Tooltip formatter={(v: any) => `${Number(v ?? 0).toLocaleString()} ${unit}`} />
-            <Line type="monotone" dataKey="emissions" stroke="url(#lineColor)" strokeWidth={2} dot={{ r: 2 }} />
+            <YAxis tickFormatter={(v: number) => Number(v ?? 0).toLocaleString()} />
+            <Tooltip formatter={tooltipFormatter} />
+            <Line type="monotone" dataKey="emissions" stroke="url(#lineColor)" strokeWidth={2} dot={{ r: 2 }} isAnimationActive={false} />
           </LineChart>
         </ResponsiveContainer>
       </div>

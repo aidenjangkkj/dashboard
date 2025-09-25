@@ -39,6 +39,7 @@ export default function Page() {
   // ✅ 훅은 항상 최상단
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [targetOpen, setTargetOpen] = useState(false);
+  const targetsByMonth = useUiStore((s) => s.targetsByMonth as Record<string, number> | undefined);
 
   useEffect(() => {
     (async () => {
@@ -49,7 +50,11 @@ export default function Page() {
   }, [loadConfig, loadCountries, loadCompanies, init]);
 
   // ✅ useMemo도 return 이전에
-  const companiesSafe = Array.isArray(companies) ? companies : [];
+  const companiesSafe = useMemo(
+    () => (Array.isArray(companies) ? companies : []),
+    [companies]
+  );
+
   const allSeries = useMemo(
     () => companiesSafe.flatMap((c) => c?.emissions ?? []),
     [companiesSafe]
@@ -184,7 +189,7 @@ export default function Page() {
           </div>
         </div>
 
-        <TargetVsActual />
+        <TargetVsActual data={allSeries}/>
       </section>
 
       {/* 모바일 바텀시트: 기간/목표 */}

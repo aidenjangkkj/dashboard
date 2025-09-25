@@ -60,7 +60,7 @@ export const useConfigStore = create<State & Actions>((set, get) => ({
       if (fxMode === "historical" && fxDate) params.set("date", fxDate);
 
 
-      const url = `dashboard/api/rates?${params.toString()}`;
+      const url = `/api/rates?${params.toString()}`;
 
       const res = await fetch(url, { cache: "no-store" });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
