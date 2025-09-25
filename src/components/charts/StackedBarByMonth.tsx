@@ -1,91 +1,84 @@
+// src/components/charts/StackedBarByMonth.tsx
 "use client";
 import {
-  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Legend,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  Legend,
 } from "recharts";
-import type { GhgEmission } from "@/lib/types";
-import { colorForSource } from "@/lib/colors";
+import type {
+  ValueType,
+  NameType,
+} from "recharts/types/component/DefaultTooltipContent";
+import { GhgEmission } from "@/lib/types";
 import { useUiStore } from "@/store/useUiStore";
 import { scaleUnit } from "@/lib/format";
+import type { MonthStackRow } from "@/lib/types";
+import { colorsBySource } from "@/lib/colors";
 
 export default function StackedBarByMonth({
   data,
-  variant = "absolute",
 }: {
   data: GhgEmission[] | null | undefined;
-  variant?: "absolute" | "percent";
 }) {
   const unit = useUiStore((s) => s.unit);
-  const isPercent = variant === "percent";
-  const dataSafe = Array.isArray(data) ? data : [];
+  const safe: GhgEmission[] = Array.isArray(data) ? data : [];
 
-  const sourcesSet = new Set<string>();
-  const byYM: Record<string, Record<string, number>> = {};
-
-  for (const e of dataSafe) {
-    const src = e?.source ?? "unknown";
+  // 월 x 소스 누적 집계
+  const map = safe.reduce<Record<string, Record<string, number>>>((acc, e) => {
     const ym = e?.yearMonth ?? "";
+    const src = e?.source ?? "etc";
     const val = e?.emissions ?? 0;
-    if (!ym) continue;
-    sourcesSet.add(src);
-    byYM[ym] ||= {};
-    byYM[ym][src] = (byYM[ym][src] ?? 0) + val;
-  }
+    if (!ym) return acc;
+    acc[ym] ??= {};
+    acc[ym][src] = (acc[ym][src] ?? 0) + val;
+    return acc;
+  }, {});
 
-  const sources = Array.from(sourcesSet);
-  const rows = Object.keys(byYM)
-    .sort((a, b) => a.localeCompare(b))
-    .map((ym) => {
-      const row: Record<string, number | string> = { yearMonth: ym };
-      let sum = 0;
-      for (const s of sources) {
-        const raw = byYM[ym][s] ?? 0;
-        const scaled = scaleUnit(raw, unit);
-        row[s] = scaled;
-        sum += scaled;
-      }
-      if (isPercent && sum > 0) {
-        for (const s of sources) {
-          row[s] = Number((((row[s] as number) / sum) * 100).toFixed(2));
-        }
-      }
-      return row;
-    });
+  const months = Object.keys(map).sort((a, b) => a.localeCompare(b));
+  const sourceKeys = Array.from(
+    new Set(months.flatMap((m) => Object.keys(map[m])))
+  );
+
+  const rows: MonthStackRow[] = months.map((ym) => {
+    const row: MonthStackRow = { yearMonth: ym };
+    for (const k of sourceKeys) {
+      row[k] = scaleUnit(map[ym][k] ?? 0, unit);
+    }
+    return row;
+  });
+
+  const tooltipFormatter = (value: ValueType, name?: NameType) => {
+    const num = Array.isArray(value) ? Number(value[0]) : Number(value ?? 0);
+    return [`${num.toLocaleString()} ${unit}`, String(name ?? "")] as [string, string];
+  };
 
   if (!rows.length) {
     return (
       <div className="p-4 bg-white rounded-2xl shadow-sm">
-        <h2 className="font-medium">월별 소스별 {isPercent ? "비중(%)" : `배출량 (${unit})`}</h2>
-        <div className="text-sm text-neutral-500 mt-1">표시할 데이터가 없습니다.</div>
+        <h2 className="mb-2 font-medium">소스별 누적 막대 (월)</h2>
+        <div className="text-sm text-neutral-500">표시할 데이터가 없습니다.</div>
       </div>
     );
   }
 
   return (
     <div className="p-4 bg-white rounded-2xl shadow-sm">
-      <div className="flex items-center justify-between mb-2">
-        <h2 className="font-medium">월별 소스별 {isPercent ? "비중(%)" : `배출량 (${unit})`}</h2>
-      </div>
+      <h2 className="mb-2 font-medium">소스별 누적 막대 (월)</h2>
       <div className="h-80">
         <ResponsiveContainer>
-          <BarChart data={rows} stackOffset={isPercent ? "expand" : "none"} margin={{ top: 8, right: 20, bottom: 32, left: 12 }}>
+          <BarChart data={rows}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="yearMonth" tickMargin={8} />
-            <YAxis
-              tickFormatter={(v) => (isPercent ? `${Number(v ?? 0)}%` : Number(v ?? 0).toLocaleString())}
-              domain={isPercent ? [0, 100] : ["auto", "auto"]}
-            />
-            <Tooltip
-              formatter={(value: any, name: any) => {
-                const v = typeof value === "number" ? value : Number(value ?? 0);
-                return isPercent
-                  ? [`${v.toFixed(1)} %`, String(name ?? "")]
-                  : [`${v.toLocaleString()} ${unit}`, String(name ?? "")];
-              }}
-              labelFormatter={(label: any) => `월: ${label ?? ""}`}
-            />
-            <Legend verticalAlign="bottom" height={36} />
-            {sources.map((s, i) => (
-              <Bar key={s} dataKey={s} stackId="emissions" fill={colorForSource(s, i)} isAnimationActive={false} />
+            <YAxis tickFormatter={(v: number) => Number(v ?? 0).toLocaleString()} />
+            <Tooltip formatter={tooltipFormatter} />
+            <Legend />
+            {sourceKeys.map((k) => (
+              <Bar key={k} dataKey={k} stackId="a" fill={colorsBySource[k] ?? "#6366f1"} />
             ))}
           </BarChart>
         </ResponsiveContainer>

@@ -7,7 +7,7 @@ import {
   fetchCountries,
 } from "@/lib/api";
 import { Post, Company, Country } from "@/lib/types";
-
+import { toMessage } from "@/lib/error";
 type State = {
   countries: Country[];
   companies: Company[];
@@ -47,8 +47,8 @@ export const useDataStore = create<State & Actions>((set, get) => ({
     try {
       const list = await fetchCompanies();
       set({ companies: list, loading: false });
-    } catch (e: any) {
-      set({ loading: false, error: e?.message ?? "Failed to load companies" });
+    } catch (e: unknown) {
+      set({ loading: false, error: toMessage(e, "Failed to load companies") });
     }
   },
 

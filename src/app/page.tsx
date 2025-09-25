@@ -156,34 +156,33 @@ export default function Page() {
         <div className="my-5">
           <TopNBar />
         </div>
-<div className="flex items-center">
-  {/* 데스크톱: 인라인 컨트롤 (좌측 정렬 유지) */}
-  <div className="mb-5 hidden md:flex items-center gap-2">
-    {isDesktop && <TargetControls />}
-  </div>
+        <div className="flex items-center">
+          {/* 데스크톱: 인라인 컨트롤 (좌측 정렬 유지) */}
+          <div className="mb-5 hidden md:flex items-center gap-2">
+            {isDesktop && <TargetControls />}
+          </div>
 
-  {/* 모바일: 버튼을 오른쪽 끝으로 (ml-auto + pr-4) */}
-  <div className="md:hidden ml-auto pr-4">
-    <button
-      className="inline-flex mb-3 items-center gap-2 border rounded-md px-2 py-1 text-sm bg-white/80 dark:bg-white/5"
-      onClick={() => setTargetOpen(true)}
-      aria-haspopup="dialog"
-      aria-expanded={targetOpen}
-    >
-      목표 설정
-      <svg
-        viewBox="0 0 24 24"
-        className="h-4 w-4"
-        fill="none"
-        stroke="currentColor"
-        strokeWidth="2"
-      >
-        <path d="M3 5h18M6 12h12M10 19h4" />
-      </svg>
-    </button>
-  </div>
-</div>
-
+          {/* 모바일: 버튼을 오른쪽 끝으로 (ml-auto + pr-4) */}
+          <div className="md:hidden ml-auto pr-4">
+            <button
+              className="inline-flex mb-3 items-center gap-2 border rounded-md px-2 py-1 text-sm bg-white/80 dark:bg-white/5"
+              onClick={() => setTargetOpen(true)}
+              aria-haspopup="dialog"
+              aria-expanded={targetOpen}
+            >
+              목표 설정
+              <svg
+                viewBox="0 0 24 24"
+                className="h-4 w-4"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+              >
+                <path d="M3 5h18M6 12h12M10 19h4" />
+              </svg>
+            </button>
+          </div>
+        </div>
 
         <TargetVsActual />
       </section>

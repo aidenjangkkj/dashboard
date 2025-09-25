@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useDataStore } from "@/store/useDataStore";
 import Card from "@/components/ui/Card";
 import { useToast } from "@/components/ui/ToastProvider";
-
+import { toMessage } from "@/lib/error";
 export default function PostEditor({ companyId }: { companyId: string }) {
   const { addOrUpdatePost } = useDataStore();
   const { showToast } = useToast();
@@ -33,8 +33,8 @@ export default function PostEditor({ companyId }: { companyId: string }) {
 
     try {
       await doSave();
-    } catch (err: any) {
-      const message = err?.message || "알 수 없는 오류";
+    } catch (err: unknown) {
+      const message = toMessage(err, "알 수 없는 오류")
 
       // 실패 토스트 + 재시도 버튼 (닫기 시에도 페이지로 복귀)
       showToast(

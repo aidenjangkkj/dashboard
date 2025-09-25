@@ -1,6 +1,6 @@
 // src/app/api/rates/route.ts
 import { NextResponse } from "next/server";
-
+import { toMessage } from "@/lib/error";
 const LIVE_REVALIDATE_SEC = 60 * 60;       // 1h
 const DAILY_REVALIDATE_SEC = 60 * 60 * 24; // 24h
 
@@ -71,18 +71,18 @@ export async function GET(req: Request) {
       timestamp: data.timestamp,
       success: true,
     });
-  } catch (e: any) {
-    // 안전 기본치: USDKRW=1350, KRWUSD=1/1350
-    return NextResponse.json(
-      {
-        mode,
-        date: mode === "historical" ? date : undefined,
-        baseSource: "USD",
-        pairRates: { USDKRW: 1350, KRWUSD: 1 / 1350, USDUSD: 1, KRWKRW: 1 },
-        fallback: true,
-        message: e?.message ?? "FX fallback",
-      },
-      { status: 200 }
-    );
-  }
+  } catch (e: unknown) {
+  // 안전 기본치: USDKRW=1350, KRWUSD=1/1350
+  return NextResponse.json(
+    {
+      mode,
+      date: mode === "historical" ? date : undefined,
+      baseSource: "USD",
+      pairRates: { USDKRW: 1350, KRWUSD: 1 / 1350, USDUSD: 1, KRWKRW: 1 },
+      fallback: true,
+      message: toMessage(e, "FX fallback"), // ✅ 유틸 사용
+    },
+    { status: 200 }
+  );
+}
 }

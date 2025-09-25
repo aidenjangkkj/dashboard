@@ -5,8 +5,8 @@ import {
 } from "./seed";
 import { Post, Company, Country } from "@/lib/types";
 
-let _countries: Country[] = [...seedCountries];
-let _companies: Company[] = [...seedCompanies];
+const _countries: Country[] = [...seedCountries];
+const _companies: Company[] = [...seedCompanies];
 let _posts: Post[] = [...seedPosts];
 
 const delay = (ms: number) => new Promise((res) => setTimeout(res, ms));

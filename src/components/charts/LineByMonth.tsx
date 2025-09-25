@@ -1,3 +1,5 @@
+// dashboard/src/components/charts/LineByMonth.tsx
+
 "use client";
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
@@ -10,7 +12,7 @@ export default function LineByMonth({ data }: { data: GhgEmission[] | undefined 
   const unit = useUiStore((s) => s.unit);
 
   const dataSafe = Array.isArray(data) ? data : [];
-
+  
   const byMonth = Object.values(
     dataSafe.reduce<Record<string, { yearMonth: string; emissions: number }>>((acc, e) => {
       const ym = e?.yearMonth ?? "";

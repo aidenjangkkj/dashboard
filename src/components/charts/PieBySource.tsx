@@ -1,48 +1,51 @@
+// src/components/charts/PieBySource.tsx
 "use client";
-import {
-  PieChart, Pie, Tooltip, ResponsiveContainer, Cell, Legend, type PieLabelRenderProps,
-} from "recharts";
+import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer } from "recharts";
+import type {
+  ValueType,
+  NameType,
+} from "recharts/types/component/DefaultTooltipContent";
 import { GhgEmission } from "@/lib/types";
-import { colorForSource } from "@/lib/colors";
 import { useUiStore } from "@/store/useUiStore";
-import { scaleUnit } from "@/lib/format";
+import type { SourceSlice } from "@/lib/types";
+import { colorForSource } from "@/lib/colors"; // 소스별 색상 매핑 유틸이 있다면 사용
 
-type Slice = { name: string; value: number };
-
-export default function PieBySource({ data }: { data: GhgEmission[] | null | undefined }) {
+export default function PieBySource({
+  data,
+}: {
+  data: GhgEmission[] | null | undefined;
+}) {
   const unit = useUiStore((s) => s.unit);
-  const dataSafe = Array.isArray(data) ? data : [];
+  const safe: GhgEmission[] = Array.isArray(data) ? data : [];
 
-  const bySourceRaw: Slice[] = Object.values(
-    dataSafe.reduce<Record<string, Slice>>((acc, e) => {
-      const src = e?.source ?? "unknown";
-      const val = e?.emissions ?? 0;
-      acc[src] ||= { name: src, value: 0 };
-      acc[src].value += val;
-      return acc;
-    }, {})
-  ).sort((a, b) => (b?.value ?? 0) - (a?.value ?? 0));
+  // 소스 키 추출 (데이터 스키마에 맞게 조정)
+  // 예: emission.source 가 "scope1" | "scope2" | ...
+  const totals = safe.reduce<Record<string, number>>((acc, e) => {
+    const key = e?.source ?? "etc";
+    const val = e?.emissions ?? 0;
+    acc[key] = (acc[key] ?? 0) + val;
+    return acc;
+  }, {});
 
-  const bySource: Slice[] = bySourceRaw.map((s) => ({
-    name: s?.name ?? "unknown",
-    value: scaleUnit(s?.value ?? 0, unit),
-  }));
+  const slices: SourceSlice[] = Object.entries(totals)
+    .map(([source, value]) => ({ source, value }))
+    .filter((s) => s.value > 0);
 
-  const total = bySource.reduce((a, b) => a + (b?.value ?? 0), 0) || 1;
-
-  const renderLabel = (props: PieLabelRenderProps) => {
-    const raw = props?.value as number | string | undefined;
-    const v = typeof raw === "number" ? raw : Number(raw ?? 0);
-    const name = (props?.payload as any)?.name ?? "";
-    const pct = Math.round((v / total) * 100);
-    return `${name} ${pct}%`;
+  const tooltipFormatter = (value: ValueType, name?: NameType) => {
+    const num = Array.isArray(value) ? Number(value[0]) : Number(value ?? 0);
+    return [`${num.toLocaleString()} ${unit}`, String(name ?? "")] as [
+      string,
+      string
+    ];
   };
 
-  if (!bySource.length) {
+  if (!slices.length) {
     return (
       <div className="p-4 bg-white rounded-2xl shadow-sm">
         <h2 className="mb-2 font-medium">소스별 비중</h2>
-        <div className="text-sm text-neutral-500">표시할 데이터가 없습니다.</div>
+        <div className="text-sm text-neutral-500">
+          표시할 데이터가 없습니다.
+        </div>
       </div>
     );
   }
@@ -52,27 +55,20 @@ export default function PieBySource({ data }: { data: GhgEmission[] | null | und
       <h2 className="mb-2 font-medium">소스별 비중</h2>
       <div className="h-72">
         <ResponsiveContainer>
-          <PieChart margin={{ top: 8, right: 20, bottom: 48, left: 12 }}>
+          <PieChart>
             <Pie
-              data={bySource}
+              data={slices}
               dataKey="value"
-              nameKey="name"
-              innerRadius="45%"
-              outerRadius="70%"
-              labelLine={false}
-              label={renderLabel}
+              nameKey="source"
+              innerRadius={60}
+              outerRadius={100}
+              strokeWidth={1}
             >
-              {bySource.map((s, i) => (
-                <Cell key={s?.name ?? i} fill={colorForSource(s?.name ?? "unknown", i)} />
+              {slices.map((s, i) => (
+                <Cell key={s.source} fill={colorForSource(s.source, i)} />
               ))}
             </Pie>
-            <Tooltip
-              formatter={(value: any, name: any) => {
-                const v = typeof value === "number" ? value : Number(value ?? 0);
-                return [`${v.toLocaleString()} ${unit}`, String(name ?? "")];
-              }}
-            />
-            <Legend verticalAlign="bottom" align="center" iconType="circle" />
+            <Tooltip formatter={tooltipFormatter} />
           </PieChart>
         </ResponsiveContainer>
       </div>
