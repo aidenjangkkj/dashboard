@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import Spinner from "@/components/ui/Spinner";
 import { useDataStore } from "@/store/useDataStore";
 import { useUiStore } from "@/store/useUiStore";
 import { useConfigStore } from "@/store/useConfigStore";
@@ -16,7 +15,17 @@ import TopNBar from "@/components/charts/TopNBar";
 import TargetVsActual from "@/components/charts/TargetVsActual";
 import { scaleUnit, fmtNumber } from "@/lib/format";
 import CompanyCards from "@/components/metrics/CompanyCards";
-
+import {
+  KpiSkeleton,
+  CountryCardsSkeleton,
+  CompanyCardsSkeleton,
+} from "@/components/skeletons/SkeletonCards";
+import {
+  ChartSkeleton,
+  TwoChartsSkeleton,
+  TopNBarSkeleton,
+  TargetVsActualSkeleton,
+} from "@/components/skeletons/SkeletonCharts";
 function useIsDesktop(breakpoint = 768) {
   const [isDesktop, setIsDesktop] = useState(false);
   useEffect(() => {
@@ -58,8 +67,40 @@ export default function Page() {
     () => companiesSafe.flatMap((c) => c?.emissions ?? []),
     [companiesSafe]
   );
-  // ⛳ 이제 조건부 return
-  if (loading || fxLoading) return <Spinner />;
+if (loading || fxLoading) {
+  return (
+    <div className="space-y-8 md:space-y-10">
+      <section aria-labelledby="kpi-title" className="section">
+        <h2 id="kpi-title" className="section-title mb-3">요약 지표</h2>
+        <KpiSkeleton />
+      </section>
+
+      <section>
+        <h2 className="section-title mb-3">국가별 요약</h2>
+        <CountryCardsSkeleton />
+      </section>
+
+      <section aria-labelledby="company-summary-title" className="section">
+        <h2 id="company-summary-title" className="section-title mb-3">회사별 요약</h2>
+        <CompanyCardsSkeleton />
+      </section>
+
+      <section aria-labelledby="analysis-title" className="section">
+        <div className="flex items-baseline justify-between">
+          <h2 id="analysis-title" className="section-title">분석 차트</h2>
+          <span className="section-subtitle hidden md:inline">전체 국가 합산</span>
+        </div>
+        <div className="grid gap-6 grid-cols-1 my-5">
+          <ChartSkeleton title="월별 배출량 추이" />
+        </div>
+        <TwoChartsSkeleton />
+        <TopNBarSkeleton />
+        <TargetVsActualSkeleton />
+      </section>
+    </div>
+  );
+}
+
   if (error) return <div className="p-4">에러: {error}</div>;
 
   const totalCompanies = companiesSafe.length;

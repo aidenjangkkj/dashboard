@@ -5,11 +5,11 @@ import { useEffect, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { useDataStore } from "@/store/useDataStore";
 import { useUiStore } from "@/store/useUiStore";
-import Spinner from "@/components/ui/Spinner";
 import LineByMonth from "@/components/charts/LineByMonth";
 import PieBySource from "@/components/charts/PieBySource";
 import StackedBarByMonth from "@/components/charts/StackedBarByMonth";
 import type { GhgEmission } from "@/lib/types";
+import { CountryDetailSkeleton } from "@/components/skeletons/SkeletonDetail";
 
 function Star({ active }: { active: boolean }) {
   return (
@@ -61,7 +61,7 @@ export default function CountryPage() {
   }, [posts, countryCompanies]);
 
   // ✅ 모든 훅 호출 후에 조건부 리턴
-  if (loading || !countries.length) return <Spinner />;
+  if (loading) return <CountryDetailSkeleton />;
   if (error) return <div className="p-4">에러: {error}</div>;
   if (!country) return <div className="p-4">국가를 찾을 수 없어요. (요청 코드: {codeUpper})</div>;
 

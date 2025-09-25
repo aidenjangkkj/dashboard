@@ -9,8 +9,8 @@ import LineByMonth from "@/components/charts/LineByMonth";
 import PieBySource from "@/components/charts/PieBySource";
 import PostList from "@/components/posts/PostList";
 import PostEditor from "@/components/posts/PostEditor";
-import Spinner from "@/components/ui/Spinner";
 import StackedBarByMonth from "@/components/charts/StackedBarByMonth";
+import { CompanyDetailSkeleton } from "@/components/skeletons/SkeletonDetail";
 
 function Star({ active }: { active: boolean }) {
   return (
@@ -32,14 +32,13 @@ export default function CompanyPage() {
   const { companies, selectCompany, selectedCompanyId, posts, loading, error } =
     useDataStore();
   const { toggleCompanyFavorite, isCompanyFavorite } = useUiStore();
-
   const company = companies.find((c) => c.id === id);
 
   useEffect(() => {
     if (id) selectCompany(id);
   }, [id, selectCompany]);
 
-  if (loading) return <Spinner />;
+  if (loading) return <CompanyDetailSkeleton />;
   if (error) return <div className="p-4">에러: {error}</div>;
   if (!company) return <div className="p-4">회사를 찾을 수 없어요.</div>;
 
