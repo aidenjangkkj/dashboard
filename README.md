@@ -65,7 +65,7 @@ Next.js(App Router) + TypeScript + TailwindCSS + Zustand 상태관리 기반으�
 - **State Management**: Zustand
 - **Data Visualization**: Recharts
 - **API 통신**: Next.js Route Handlers (`/api/rates` 등)
-- **배포**: [Vercel
+- **배포**: [Vercel]
 
 ---
 
