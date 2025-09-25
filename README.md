@@ -72,7 +72,9 @@ Next.js(App Router) + TypeScript + TailwindCSS + Zustand 상태관리 기반으�
 
 ## ⚡ 성능 측정
 - (https://pagespeed.web.dev/analysis/https-dashboard-omega-beige-25-vercel-app/3e2cf2wmwt?form_factor=desktop)
-  
+- LightHouse
+-   <img width="904" height="657" alt="캡처" src="https://github.com/user-attachments/assets/bbf53332-b577-407a-82ca-c7c084cdf970" />
+
 
 
 ---
