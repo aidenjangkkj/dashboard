@@ -3,7 +3,7 @@
 import {
   LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
 } from "recharts";
-import type { ValueType, NameType } from "recharts/types/component/DefaultTooltipContent";
+import type { ValueType } from "recharts/types/component/DefaultTooltipContent";
 import { GhgEmission } from "@/lib/types";
 import { useUiStore } from "@/store/useUiStore";
 import { scaleUnit } from "@/lib/format";

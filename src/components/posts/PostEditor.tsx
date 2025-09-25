@@ -33,8 +33,8 @@ export default function PostEditor({ companyId }: { companyId: string }) {
 
     try {
       await doSave();
-    } catch (err: unknown) {
-      const message = toMessage(err, "알 수 없는 오류")
+    } catch (e: unknown) {
+      const message = toMessage(e, "알 수 없는 오류");
 
       // 실패 토스트 + 재시도 버튼 (닫기 시에도 페이지로 복귀)
       showToast(
@@ -50,9 +50,9 @@ export default function PostEditor({ companyId }: { companyId: string }) {
               try {
                 setSaving(true);
                 await doSave();
-              } catch (e: any) {
+              } catch (e: unknown) {
                 showToast(
-                  `다시 실패했습니다 ❌ (${e?.message || "알 수 없는 오류"})`,
+                  `다시 실패했습니다 ❌ (${toMessage(e, "알 수 없는 오류")})`,
                   { duration: 0, redirectTo: redirectPath }
                 );
               } finally {

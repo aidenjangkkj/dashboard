@@ -1,4 +1,4 @@
-// src/store/useUiStore.ts  ← 교체
+// src/store/useUiStore.ts
 import { create } from "zustand";
 
 type UiState = {
@@ -13,20 +13,20 @@ type UiState = {
   favoriteCountryCodes: Set<string>;
 
   // 기간 필터
-  periodFrom?: string | null;   // "2023-01"
-  periodTo?: string | null;     // "2024-12"
+  periodFrom?: string | null; // "2023-01"
+  periodTo?: string | null;   // "2024-12"
 
   // Top N
   topN: number;
 
   // 목표(연도/감축율)
   target: {
-    baselineYear?: number;      // 기준연도 (예: 2024)
-    targetYear?: number;        // 목표연도 (예: 2030)
-    reductionPct?: number;      // 2030까지 -30% => 30
+    baselineYear?: number; // 기준연도 (예: 2024)
+    targetYear?: number;   // 목표연도 (예: 2030)
+    reductionPct?: number; // 2030까지 -30% => 30
   };
 
-  // ✅ 월별 목표 맵 ("YYYY-MM" → 값)
+  // 월별 목표 맵 ("YYYY-MM" → 값)
   targetsByMonth: Record<string, number>;
 };
 
@@ -58,7 +58,6 @@ type UiActions = {
 
   setTarget: (t: Partial<UiState["target"]>) => void;
 
-  // ✅ 월별 목표 액션
   setTargetForMonth: (ym: string, value: number) => void;
   setTargets: (map: Record<string, number>) => void;
   clearTargets: () => void;
@@ -78,13 +77,12 @@ export const useUiStore = create<UiState & UiActions>((set, get) => ({
   favoriteCountryCodes: new Set<string>(),
 
   periodFrom: null,
-  periodTo:   null,
+  periodTo: null,
 
   topN: 10,
 
   target: { baselineYear: 2024, targetYear: 2030, reductionPct: 30 },
 
-  // ✅ 월별 목표 초기값
   targetsByMonth: {},
 
   // ---- Filters / Target ----
@@ -92,7 +90,6 @@ export const useUiStore = create<UiState & UiActions>((set, get) => ({
   setTopN: (n) => set({ topN: n }),
   setTarget: (t) => set((s) => ({ target: { ...s.target, ...t } })),
 
-  // ✅ 월별 목표 액션 구현
   setTargetForMonth: (ym, value) =>
     set((s) => ({ targetsByMonth: { ...s.targetsByMonth, [ym]: value } })),
   setTargets: (map) => set({ targetsByMonth: { ...map } }),
@@ -126,13 +123,17 @@ export const useUiStore = create<UiState & UiActions>((set, get) => ({
       const raw = localStorage.getItem(FAVORITES_KEY);
       if (!raw) return;
 
-      const parsed = JSON.parse(raw) as {
-        companies?: string[];
-        countries?: string[];
-      };
+      const parsed = JSON.parse(raw) as Partial<{
+        companies: unknown;
+        countries: unknown;
+      }>;
 
-      const companyArr: string[] = Array.isArray(parsed?.companies) ? parsed!.companies! : [];
-      const countryArr: string[] = Array.isArray(parsed?.countries) ? parsed!.countries! : [];
+      const companyArr = Array.isArray(parsed.companies)
+        ? (parsed.companies.filter((x): x is string => typeof x === "string"))
+        : [];
+      const countryArr = Array.isArray(parsed.countries)
+        ? (parsed.countries.filter((x): x is string => typeof x === "string"))
+        : [];
 
       set({
         favoriteCompanyIds: new Set(companyArr),
@@ -150,16 +151,19 @@ export const useUiStore = create<UiState & UiActions>((set, get) => ({
     set({ favoriteCompanyIds: next });
 
     try {
-      const now = JSON.parse(localStorage.getItem(FAVORITES_KEY) || "{}") as {
-        companies?: string[];
-        countries?: string[];
-      };
+      const now = JSON.parse(localStorage.getItem(FAVORITES_KEY) || "{}") as Partial<{
+        companies: unknown;
+        countries: unknown;
+      }>;
+      const prevCountries = Array.isArray(now.countries)
+        ? now.countries.filter((x): x is string => typeof x === "string")
+        : [];
+
       localStorage.setItem(
         FAVORITES_KEY,
         JSON.stringify({
           companies: Array.from(next),
-          countries: Array.from(get().favoriteCountryCodes),
-          ...now,
+          countries: prevCountries,
         })
       );
     } catch {
@@ -174,16 +178,19 @@ export const useUiStore = create<UiState & UiActions>((set, get) => ({
     set({ favoriteCountryCodes: next });
 
     try {
-      const now = JSON.parse(localStorage.getItem(FAVORITES_KEY) || "{}") as {
-        companies?: string[];
-        countries?: string[];
-      };
+      const now = JSON.parse(localStorage.getItem(FAVORITES_KEY) || "{}") as Partial<{
+        companies: unknown;
+        countries: unknown;
+      }>;
+      const prevCompanies = Array.isArray(now.companies)
+        ? now.companies.filter((x): x is string => typeof x === "string")
+        : [];
+
       localStorage.setItem(
         FAVORITES_KEY,
         JSON.stringify({
-          companies: Array.from(get().favoriteCompanyIds),
+          companies: prevCompanies,
           countries: Array.from(next),
-          ...now,
         })
       );
     } catch {
